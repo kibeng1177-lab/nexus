@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Tech KE - Premium Smart Device Investments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #090d16; color: #f3f4f6; }
+        .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .product-card-3d { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; perspective: 1000px; }
+        .product-card-3d:hover { transform: translateY(-6px) rotateX(2deg) rotateY(-2deg); box-shadow: 0 20px 30px -10px rgba(99, 102, 241, 0.3); }
+        .glow-btn { box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); }
+        .tab-active { border-bottom: 3px solid #6366f1; color: #818cf8; }
+        
+        /* Smooth Infinite Ticker Animation */
+        @keyframes scrollUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        .ticker-wrapper {
+            display: flex;
+            flex-direction: column;
+            animation: scrollUp 20s linear infinite;
+        }
+        .ticker-wrapper:hover {
+            animation-play-state: paused;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 3px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- NAVIGATION HEADER -->
+    <header class="glass-card sticky top-0 z-50 border-b border-gray-800 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('dashboard')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-microchip text-white text-lg"></i>
+            </div>
+            <div>
+                <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">Nexus Tech KE</span>
+                <span class="block text-[10px] text-indigo-400 uppercase tracking-widest font-semibold">Smart Investment Portal</span>
+            </div>
+        </div>
+        <div id="nav-user-info" class="hidden flex items-center space-x-4">
+            <div class="text-right hidden sm:block">
+                <p id="nav-display-user" class="text-xs font-semibold text-gray-300"></p>
+                <p class="text-[10px] text-emerald-400"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Active Session</p>
+            </div>
+            <button onclick="logout()" class="text-xs bg-gray-800 hover:bg-red-900/40 text-gray-300 hover:text-red-400 px-3 py-2 rounded-lg border border-gray-700 transition">
+                <i class="fa-solid fa-power-off mr-1"></i> Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- LIVE STREAM TICKER BAR -->
+    <div class="bg-indigo-950/40 border-b border-indigo-900/40 py-2.5 px-6 overflow-hidden flex items-center text-xs">
+        <div class="flex items-center text-indigo-400 font-bold mr-4 uppercase tracking-wider whitespace-nowrap">
+            <i class="fa-solid fa-satellite-dish mr-2 animate-pulse"></i> Live Payouts:
+        </div>
+        <div class="relative h-5 overflow-hidden flex-grow">
+            <div id="live-ticker-stream" class="ticker-wrapper absolute w-full space-y-1">
+                <!-- Dynamically populated live stream records -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6">
+
+        <!-- 1. AUTHENTICATION VIEW -->
+        <div id="view-auth" class="w-full max-w-md">
+            <div class="glass-card rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+                <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl"></div>
+                
+                <div class="text-center mb-8">
+                    <h2 id="auth-title" class="text-2xl font-bold text-white tracking-tight">Welcome Back</h2>
+                    <p id="auth-subtitle" class="text-xs text-gray-400 mt-1">Sign in using your Email or Phone Number</p>
+                </div>
+
+                <!-- Mode Switcher -->
+                <div class="flex bg-gray-900/80 p-1 rounded-xl mb-6 border border-gray-800">
+                    <button id="tab-login" onclick="setAuthMode('login')" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow">Sign In</button>
+                    <button id="tab-register" onclick="setAuthMode('register')" class="flex-1 py-2 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition">Register</button>
+                </div>
+
+                <!-- Auth Form -->
+                <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+                    <div id="invite-code-group" class="hidden">
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Invitation Code (Optional)</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-ticket absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
+                            <input type="text" id="input-invite" placeholder="Enter referral code" class="w-full bg-gray-900/90 border border-gray-800 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Email or Phone Number</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
+                            <input type="text" id="input-credential" required placeholder="e.g. user@gmail.com or 0712345678" class="w-full bg-gray-900/90 border border-gray-800 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Password</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
+                            <input type="password" id="input-password" required placeholder="••••••••" class="w-full bg-gray-900/90 border border-gray-800 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="auth-btn" class="w-full mt-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/30 text-sm glow-btn">
+                        Sign In
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. USER DASHBOARD VIEW -->
+        <div id="view-dashboard" class="w-full max-w-6xl hidden space-y-6">
+            
+            <!-- Account Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-indigo-500 relative overflow-hidden">
+                    <p class="text-xs text-gray-400 font-medium">Main Balance</p>
+                    <h3 id="dash-balance" class="text-2xl font-extrabold text-white mt-1">KES 0.00</h3>
+                    <div class="mt-3 flex gap-2">
+                        <button onclick="openModal('modal-recharge')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-lg transition"><i class="fa-solid fa-wallet mr-1"></i> Recharge</button>
+                        <button onclick="openModal('modal-withdraw')" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold py-2 rounded-lg transition border border-gray-700"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Withdraw</button>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-emerald-500">
+                    <p class="text-xs text-gray-400 font-medium">Total Earned</p>
+                    <h3 id="dash-total-earned" class="text-2xl font-extrabold text-emerald-400 mt-1">KES 0.00</h3>
+                    <p class="text-[10px] text-gray-500 mt-3"><i class="fa-solid fa-chart-line text-emerald-500"></i> Daily Task Revenue Enabled</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-violet-500">
+                    <p class="text-xs text-gray-400 font-medium">Active Subscriptions</p>
+                    <h3 id="dash-active-subs" class="text-2xl font-extrabold text-white mt-1">0 Active</h3>
+                    <p class="text-[10px] text-gray-500 mt-3">60-day cycle active</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-amber-500">
+                    <p class="text-xs text-gray-400 font-medium">Member Status</p>
+                    <h3 id="dash-member-status" class="text-xl font-extrabold text-amber-400 mt-1">Unfunded</h3>
+                    <p class="text-[10px] text-gray-500 mt-3">Requires recharge to unlock</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs for Dashboard -->
+            <div class="flex border-b border-gray-800 space-x-8 text-sm font-semibold">
+                <button onclick="switchDashTab('products')" id="dtab-products" class="pb-3 tab-active transition"><i class="fa-solid fa-mobile-screen-button mr-2"></i> Smart Devices Marketplace</button>
+                <button onclick="switchDashTab('tasks')" id="dtab-tasks" class="pb-3 text-gray-400 hover:text-white transition"><i class="fa-solid fa-bolt mr-2"></i> Daily Task Center</button>
+                <button onclick="switchDashTab('team')" id="dtab-team" class="pb-3 text-gray-400 hover:text-white transition"><i class="fa-solid fa-users mr-2"></i> Team & Invitations</button>
+                <button onclick="switchDashTab('history')" id="dtab-history" class="pb-3 text-gray-400 hover:text-white transition"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Financial History</button>
+            </div>
+
+            <!-- TAB 1: PRODUCTS MARKETPLACE -->
+            <div id="tab-content-products" class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="text-lg font-bold text-white">Latest Smartphone 3D Series (60 Days Cycle)</h4>
+                        <p class="text-xs text-gray-400">Purchase a device to unlock daily 20% earnings for 60 days. Multiple concurrent subscriptions allowed (unique devices only).</p>
+                    </div>
+                </div>
+
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+                    <!-- Injected dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- TAB 2: DAILY TASK CENTER -->
+            <div id="tab-content-tasks" class="hidden space-y-4">
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h4 class="text-lg font-bold text-white">Task Click Center</h4>
+                            <p class="text-xs text-gray-400">Click your active product tasks once per cycle at your exact purchase timestamp to claim your daily 20% earnings.</p>
+                        </div>
+                        <div class="bg-indigo-950/80 border border-indigo-800/60 px-4 py-2 rounded-xl text-center">
+                            <span class="block text-[10px] text-indigo-300 font-semibold uppercase">Server Time</span>
+                            <span id="live-clock" class="text-sm font-mono font-bold text-white">00:00:00</span>
+                        </div>
+                    </div>
+
+                    <div id="active-tasks-list" class="space-y-3">
+                        <!-- Injected dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TEAM PROFILE & INVITATION -->
+            <div id="tab-content-team" class="hidden space-y-6">
+                <div class="glass-card rounded-2xl p-6">
+                    <h4 class="text-lg font-bold text-white mb-2">My Invitation Code</h4>
+                    <p class="text-xs text-gray-400 mb-4">Share your unique invitation code with friends to build your team network.</p>
+                    <div class="flex items-center space-x-3 bg-gray-900/90 border border-gray-800 p-3 rounded-xl max-w-md">
+                        <span id="my-invite-code" class="font-mono text-indigo-400 font-bold text-sm tracking-wider flex-grow">NEXUS-KE-XXXX</span>
+                        <button onclick="copyInviteCode()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition"><i class="fa-solid fa-copy mr-1"></i> Copy Link</button>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6">
+                    <h4 class="text-lg font-bold text-white mb-4">Team Profile & Subordinates</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gray-900/60 border border-gray-800 p-4 rounded-xl">
+                            <span class="text-xs text-gray-400">Total Team Members</span>
+                            <h4 id="team-count" class="text-xl font-bold text-white mt-1">0 Members</h4>
+                        </div>
+                        <div class="bg-gray-900/60 border border-gray-800 p-4 rounded-xl">
+                            <span class="text-xs text-gray-400">Recharged Teammates</span>
+                            <h4 id="team-recharged-count" class="text-xl font-bold text-emerald-400 mt-1">0 Active</h4>
+                        </div>
+                        <div class="bg-gray-900/60 border border-gray-800 p-4 rounded-xl">
+                            <span class="text-xs text-gray-400">Team Commission Earned</span>
+                            <h4 id="team-commission" class="text-xl font-bold text-indigo-400 mt-1">KES 0.00</h4>
+                        </div>
+                    </div>
+                    <div id="team-members-list" class="space-y-2">
+                        <p class="text-xs text-gray-500 italic">No team members registered under your invitation code yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: FINANCIAL HISTORY -->
+            <div id="tab-content-history" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Recharge History -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h4 class="text-sm font-bold text-white mb-4"><i class="fa-solid fa-wallet text-indigo-400 mr-2"></i> Recharge History</h4>
+                        <div id="recharge-history-list" class="space-y-2 max-h-72 overflow-y-auto">
+                            <p class="text-xs text-gray-500 italic">No recharge records found.</p>
+                        </div>
+                    </div>
+                    <!-- Withdraw History -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h4 class="text-sm font-bold text-white mb-4"><i class="fa-solid fa-money-bill-transfer text-emerald-400 mr-2"></i> Withdrawal History</h4>
+                        <div id="withdraw-history-list" class="space-y-2 max-h-72 overflow-y-auto">
+                            <p class="text-xs text-gray-500 italic">No withdrawal records found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ADMIN PANEL VIEW (Hidden/Management Login via normal login) -->
+        <div id="view-admin" class="w-full max-w-6xl hidden space-y-6">
+            <div class="flex justify-between items-center glass-card p-4 rounded-2xl">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Management Control Portal</h3>
+                        <p class="text-[10px] text-gray-400">Administrative Oversight & Withdrawal Verification</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="text-xs bg-gray-800 hover:bg-red-900/40 text-gray-300 px-4 py-2 rounded-lg border border-gray-700 transition">Exit Admin</button>
+            </div>
+
+            <!-- Admin Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-red-500">
+                    <p class="text-xs text-gray-400">Pending Withdrawals</p>
+                    <h3 id="admin-pending-count" class="text-2xl font-extrabold text-white mt-1">0 Requests</h3>
+                </div>
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-emerald-500">
+                    <p class="text-xs text-gray-400">Total System Users</p>
+                    <h3 id="admin-user-count" class="text-2xl font-extrabold text-white mt-1">0 Users</h3>
+                </div>
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-l-indigo-500">
+                    <p class="text-xs text-gray-400">Total Platform Recharges</p>
+                    <h3 id="admin-total-recharges" class="text-2xl font-extrabold text-emerald-400 mt-1">KES 0.00</h3>
+                </div>
+            </div>
+
+            <!-- Withdrawal Approval Queue -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <h4 class="text-base font-bold text-white">Pending Withdrawals Verification Queue</h4>
+                <div id="admin-withdraw-list" class="space-y-3">
+                    <p class="text-xs text-gray-500 italic">No pending withdrawal verification requests.</p>
+                </div>
+            </div>
+
+            <!-- Product Management (Add Products) -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <h4 class="text-base font-bold text-white">Add New Smartphone Model</h4>
+                <form onsubmit="adminAddProduct(event)" class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                    <input type="text" id="adm-p-name" placeholder="Model Name (e.g. Nexus Ultra)" required class="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white">
+                    <input type="number" id="adm-p-price" placeholder="Price (KES)" required class="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white">
+                    <input type="number" id="adm-p-daily" placeholder="Daily Earning (KES)" required class="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white">
+                    <input type="url" id="adm-p-img" placeholder="3D Image URL" required class="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs py-2.5 transition">Add Product</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODALS -->
+
+    <!-- RECHARGE MODAL WITH M-PESA CODE INPUT -->
+    <div id="modal-recharge" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl p-6 max-w-md w-full space-y-4 relative border border-gray-700">
+            <button onclick="closeModal('modal-recharge')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-wallet text-indigo-400 mr-2"></i> Recharge Account</h3>
+            <p class="text-xs text-gray-400">Send funds to M-Pesa account number <span class="text-indigo-400 font-bold font-mono text-sm">0737047849</span>, then enter your deposit amount and M-Pesa transaction code below. Funds reflect after a 10-second verification delay.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Recharge Amount (KES)</label>
+                    <input type="number" id="recharge-amount-input" min="100" placeholder="e.g. 2000" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">M-Pesa Transaction Code</label>
+                    <input type="text" id="recharge-mpesa-code" placeholder="e.g. QHX892LKM1" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white font-mono uppercase focus:outline-none focus:border-indigo-500">
+                </div>
+                <button onclick="processRecharge()" id="recharge-submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition text-sm">
+                    Submit Code & Verify (10s)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WITHDRAW MODAL -->
+    <div id="modal-withdraw" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl p-6 max-w-md w-full space-y-4 relative border border-gray-700">
+            <button onclick="closeModal('modal-withdraw')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-arrow-up-right-from-square text-emerald-400 mr-2"></i> Withdraw Funds</h3>
+            <p class="text-xs text-gray-400">Minimum withdrawal is <span class="text-white font-bold">KES 400</span>. Management verifies all withdrawals before payout.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Withdrawal Amount (KES)</label>
+                    <input type="number" id="withdraw-amount-input" min="400" placeholder="e.g. 500" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">M-Pesa Phone Number / Account</label>
+                    <input type="text" id="withdraw-dest-input" placeholder="e.g. 0712345678" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <button onclick="processWithdraw()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition text-sm">
+                    Submit Withdrawal Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // --- DATABASE & STATE MANAGEMENT ---
+        let db = {
+            users: JSON.parse(localStorage.getItem('nexus_users') || '[]'),
+            products: JSON.parse(localStorage.getItem('nexus_products') || JSON.stringify([
+                { id: 1, name: 'Nexus X1 3D Edition', price: 1300, daily: 260, days: 60, img: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=500&q=80' },
+                { id: 2, name: 'Nexus Pro 3D Max', price: 2000, daily: 400, days: 60, img: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=500&q=80' },
+                { id: 3, name: 'Nexus Ultra 3D Fold', price: 4000, daily: 800, days: 60, img: 'https://images.unsplash.com/photo-1565849904461-04a58ad377e0?auto=format&fit=crop&w=500&q=80' },
+                { id: 4, name: 'Nexus Titan 3D Ultimate', price: 6500, daily: 1300, days: 60, img: 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=500&q=80' }
+            ])),
+            recharges: JSON.parse(localStorage.getItem('nexus_recharges') || '[]'),
+            withdrawals: JSON.parse(localStorage.getItem('nexus_withdrawals') || '[]'),
+            currentUser: JSON.parse(localStorage.getItem('nexus_current_user') || 'null')
+        };
+
+        function saveDB() {
+            localStorage.setItem('nexus_users', JSON.stringify(db.users));
+            localStorage.setItem('nexus_products', JSON.stringify(db.products));
+            localStorage.setItem('nexus_recharges', JSON.stringify(db.recharges));
+            localStorage.setItem('nexus_withdrawals', JSON.stringify(db.withdrawals));
+            localStorage.setItem('nexus_current_user', JSON.stringify(db.currentUser));
+        }
+
+        let authMode = 'login'; // 'login' or 'register'
+
+        // --- CLOCK TICKER & LIVE STREAM GENERATOR ---
+        setInterval(() => {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) clockEl.innerText = timeStr;
+        }, 1000);
+
+        // Professional Live Stream Ticker Generator with seamless double-list loop
+        const sampleNames = ["Brian O.", "Mercy W.", "Kevin K.", "Sharon N.", "Dennis M.", "Faith A.", "Ian O.", "Brenda C.", "Collins R.", "Diana J.", "Brian M.", "Cynthia K."];
+        const sampleRechargeAmounts = [1300, 2000, 4000, 6500, 10000, 3500];
+        const sampleWithdrawAmounts = [800, 1500, 3200, 5000, 12000];
+
+        function initLiveTicker() {
+            const container = document.getElementById('live-ticker-stream');
+            if (!container) return;
+            
+            let itemsHtml = '';
+            // Generate 12 items
+            for (let i = 0; i < 12; i++) {
+                const name = sampleNames[i % sampleNames.length];
+                const isRecharge = i % 2 === 0;
+                if (isRecharge) {
+                    const amt = sampleRechargeAmounts[i % sampleRechargeAmounts.length];
+                    itemsHtml += `<div class="flex items-center text-gray-300 py-0.5 whitespace-nowrap"><span class="text-indigo-400 font-bold mr-2"><i class="fa-solid fa-wallet text-[10px] mr-1"></i> Recharge:</span> ${name} successfully recharged <strong class="text-white ml-1">KES ${amt.toLocaleString()}</strong> via M-Pesa</div>`;
+                } else {
+                    const amt = sampleWithdrawAmounts[i % sampleWithdrawAmounts.length];
+                    itemsHtml += `<div class="flex items-center text-gray-300 py-0.5 whitespace-nowrap"><span class="text-emerald-400 font-bold mr-2"><i class="fa-solid fa-money-bill-transfer text-[10px] mr-1"></i> Withdrawal:</span> ${name} verified and withdrew <strong class="text-white ml-1">KES ${amt.toLocaleString()}</strong></div>`;
+                }
+            }
+            // Duplicate the exact items block so the CSS animation loops seamlessly without snapping back
+            container.innerHTML = itemsHtml + itemsHtml;
+        }
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initLiveTicker();
+            if (db.currentUser) {
+                if (db.currentUser.isAdmin) {
+                    showView('admin');
+                    initAdminPanel();
+                } else {
+                    showView('dashboard');
+                    initDashboard();
+                }
+            } else {
+                showView('auth');
+            }
+        });
+
+        function showView(viewName) {
+            document.getElementById('view-auth').classList.add('hidden');
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+            document.getElementById('nav-user-info').classList.add('hidden');
+
+            if (viewName === 'auth') {
+                document.getElementById('view-auth').classList.remove('hidden');
+            } else if (viewName === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('nav-user-info').classList.remove('hidden');
+                document.getElementById('nav-display-user').innerText = db.currentUser.credential;
+            } else if (viewName === 'admin') {
+                document.getElementById('view-admin').classList.remove('hidden');
+                document.getElementById('nav-user-info').classList.remove('hidden');
+                document.getElementById('nav-display-user').innerText = "Management Portal";
+            }
+        }
+
+        // --- AUTH LOGIC ---
+        function setAuthMode(mode) {
+            authMode = mode;
+            const tabLogin = document.getElementById('tab-login');
+            const tabReg = document.getElementById('tab-register');
+            const title = document.getElementById('auth-title');
+            const sub = document.getElementById('auth-subtitle');
+            const btn = document.getElementById('auth-btn');
+            const inviteGrp = document.getElementById('invite-code-group');
+
+            if (mode === 'login') {
+                tabLogin.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow";
+                tabReg.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition";
+                title.innerText = "Welcome Back";
+                sub.innerText = "Sign in using your Email or Phone Number";
+                btn.innerText = "Sign In";
+                inviteGrp.classList.add('hidden');
+            } else {
+                tabReg.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition shadow";
+                tabLogin.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition";
+                title.innerText = "Create Account";
+                sub.innerText = "Register with Email or Phone Number";
+                btn.innerText = "Register Account";
+                inviteGrp.classList.remove('hidden');
+            }
+        }
+
+        function handleAuth(e) {
+            e.preventDefault();
+            const cred = document.getElementById('input-credential').value.trim();
+            const pass = document.getElementById('input-password').value.trim();
+            const invite = document.getElementById('input-invite').value.trim();
+
+            if (authMode === 'login' && cred === 'management' && pass === 'admin123') {
+                db.currentUser = { credential: 'Management Admin', isAdmin: true };
+                saveDB();
+                showView('admin');
+                initAdminPanel();
+                showToast("Logged into Management Portal successfully", "success");
+                return;
+            }
+
+            if (authMode === 'register') {
+                const existing = db.users.find(u => u.credential === cred);
+                if (existing) {
+                    showToast("Account already exists with this email/phone!", "error");
+                    return;
+                }
+                const newUser = {
+                    credential: cred,
+                    password: pass,
+                    balance: 0,
+                    totalEarned: 0,
+                    hasRecharged: false,
+                    inviteCode: 'NEXUS-' + Math.floor(1000 + Math.random() * 9000),
+                    referredBy: invite || 'None',
+                    purchasedProducts: [],
+                    createdAt: new Date().toISOString()
+                };
+                db.users.push(newUser);
+                db.currentUser = newUser;
+                saveDB();
+                showView('dashboard');
+                initDashboard();
+                showToast("Registration successful! Please recharge to unlock funds and tasks.", "success");
+            } else {
+                const user = db.users.find(u => u.credential === cred && u.password === pass);
+                if (!user) {
+                    showToast("Invalid credentials or user does not exist.", "error");
+                    return;
+                }
+                db.currentUser = user;
+                saveDB();
+                showView('dashboard');
+                initDashboard();
+                showToast("Welcome back, " + user.credential, "success");
+            }
+        }
+
+        function logout() {
+            db.currentUser = null;
+            saveDB();
+            showView('auth');
+            showToast("Logged out securely.", "info");
+        }
+
+        // --- DASHBOARD CONTROLS ---
+        function switchDashTab(tabKey) {
+            ['products', 'tasks', 'team', 'history'].forEach(t => {
+                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                document.getElementById(`dtab-${t}`).className = "pb-3 text-gray-400 hover:text-white transition";
+            });
+            document.getElementById(`tab-content-${tabKey}`).classList.remove('hidden');
+            document.getElementById(`dtab-${tabKey}`).className = "pb-3 tab-active transition";
+
+            if (tabKey === 'history') renderHistory();
+            if (tabKey === 'team') renderTeam();
+            if (tabKey === 'tasks') renderTasks();
+        }
+
+        function initDashboard() {
+            syncCurrentUser();
+            document.getElementById('dash-balance').innerText = `KES ${db.currentUser.balance.toLocaleString()}`;
+            document.getElementById('dash-total-earned').innerText = `KES ${db.currentUser.totalEarned.toLocaleString()}`;
+            document.getElementById('dash-active-subs').innerText = `${db.currentUser.purchasedProducts.filter(p => p.cycleActive).length} Active`;
+            document.getElementById('dash-member-status').innerText = db.currentUser.hasRecharged ? 'Active Member' : 'Unfunded';
+            document.getElementById('my-invite-code').innerText = db.currentUser.inviteCode;
+            renderProducts();
+        }
+
+        function syncCurrentUser() {
+            const found = db.users.find(u => u.credential === db.currentUser.credential);
+            if (found) {
+                db.currentUser = found;
+            }
+        }
+
+        // --- PRODUCTS & PURCHASING ---
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = '';
+
+            db.products.forEach(p => {
+                const existingSub = db.currentUser.purchasedProducts.find(sub => sub.productId === p.id);
+                let btnHtml = '';
+
+                if (!db.currentUser.hasRecharged) {
+                    btnHtml = `<button onclick="showToast('Recharge required before purchasing products!', 'error')" class="w-full bg-gray-800 text-gray-500 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed">Recharge Required</button>`;
+                } else if (existingSub && existingSub.cycleActive) {
+                    btnHtml = `<button disabled class="w-full bg-indigo-950 text-indigo-400 border border-indigo-800 py-2.5 rounded-xl text-xs font-semibold">Active Cycle (Cannot Buy Twice)</button>`;
+                } else {
+                    btnHtml = `<button onclick="buyProduct(${p.id})" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white py-2.5 rounded-xl text-xs font-semibold transition shadow-lg shadow-indigo-600/30">Purchase Device</button>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "glass-card rounded-2xl p-4 product-card-3d flex flex-col justify-between border border-gray-800";
+                card.innerHTML = `
+                    <div>
+                        <div class="h-40 rounded-xl overflow-hidden bg-gray-900 mb-3 relative">
+                            <img src="${p.img}" alt="${p.name}" class="w-full h-full object-cover transform hover:scale-110 transition duration-500">
+                            <span class="absolute top-2 right-2 bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded-md">3D Clear</span>
+                        </div>
+                        <h5 class="text-sm font-bold text-white mb-1">${p.name}</h5>
+                        <div class="space-y-1 text-xs text-gray-400 my-3">
+                            <div class="flex justify-between"><span>Price:</span> <strong class="text-white">KES ${p.price.toLocaleString()}</strong></div>
+                            <div class="flex justify-between"><span>Daily Earning (20%):</span> <strong class="text-emerald-400">KES ${p.daily.toLocaleString()}</strong></div>
+                            <div class="flex justify-between"><span>Cycle Period:</span> <strong class="text-indigo-300">60 Days</strong></div>
+                        </div>
+                    </div>
+                    ${btnHtml}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function buyProduct(productId) {
+            const product = db.products.find(p => p.id === productId);
+            if (!db.currentUser.hasRecharged) {
+                showToast("Nor buying product without recharging!", "error");
+                return;
+            }
+            if (db.currentUser.balance < product.price) {
+                showToast("Insufficient balance on dashboard. Please recharge first.", "error");
+                return;
+            }
+
+            db.currentUser.balance -= product.price;
+            const purchaseTime = new Date().toISOString();
+            
+            db.currentUser.purchasedProducts.push({
+                productId: product.id,
+                productName: product.name,
+                price: product.price,
+                daily: product.daily,
+                purchaseTime: purchaseTime,
+                lastClickedDate: null,
+                cycleActive: true
+            });
+
+            updateUserInDB();
+            initDashboard();
+            showToast(`Successfully purchased ${product.name}! Task click schedule initialized.`, "success");
+        }
+
+        // --- TASKS & EARNINGS ---
+        function renderTasks() {
+            const list = document.getElementById('active-tasks-list');
+            list.innerHTML = '';
+
+            const activeSubs = db.currentUser.purchasedProducts.filter(sub => sub.cycleActive);
+            if (activeSubs.length === 0) {
+                list.innerHTML = `<div class="p-6 text-center bg-gray-900/50 rounded-xl border border-gray-800"><p class="text-xs text-gray-400">No active product subscriptions. Purchase a smartphone from the marketplace to start earning daily tasks.</p></div>`;
+                return;
+            }
+
+            activeSubs.forEach((sub, idx) => {
+                const todayStr = new Date().toDateString();
+                const alreadyClickedToday = sub.lastClickedDate === todayStr;
+
+                const item = document.createElement('div');
+                item.className = "glass-card p-4 rounded-xl flex flex-col sm:flex-row justify-between items-center border border-gray-800 gap-4";
+                item.innerHTML = `
+                    <div>
+                        <h5 class="text-sm font-bold text-white">${sub.productName}</h5>
+                        <p class="text-xs text-emerald-400 font-semibold mt-0.5">Daily Reward: KES ${sub.daily.toLocaleString()} (20% ROI)</p>
+                        <p class="text-[10px] text-gray-400 mt-1"><i class="fa-regular fa-clock mr-1"></i> Purchased at: ${new Date(sub.purchaseTime).toLocaleTimeString()}</p>
+                    </div>
+                    <div>
+                        ${alreadyClickedToday 
+                            ? `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-800 text-xs px-4 py-2 rounded-xl font-semibold"><i class="fa-solid fa-check mr-1"></i> Claimed Today</span>`
+                            : `<button onclick="claimTask(${idx})" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-600/30 transition">Click & Earn KES ${sub.daily}</button>`
+                        }
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function claimTask(subIndex) {
+            const sub = db.currentUser.purchasedProducts[subIndex];
+            const todayStr = new Date().toDateString();
+
+            if (sub.lastClickedDate === todayStr) {
+                showToast("You have already clicked and earned for today!", "error");
+                return;
+            }
+
+            sub.lastClickedDate = todayStr;
+            db.currentUser.balance += sub.daily;
+            db.currentUser.totalEarned += sub.daily;
+
+            updateUserInDB();
+            initDashboard();
+            renderTasks();
+            showToast(`Task completed successfully! Earned KES ${sub.daily}.`, "success");
+        }
+
+        // --- RECHARGE & WITHDRAWAL SYSTEM WITH M-PESA CODE ---
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function processRecharge() {
+            const amtInput = document.getElementById('recharge-amount-input');
+            const codeInput = document.getElementById('recharge-mpesa-code');
+            const amt = parseFloat(amtInput.value);
+            const mpesaCode = codeInput.value.trim().toUpperCase();
+            const btn = document.getElementById('recharge-submit-btn');
+
+            if (!amt || amt <= 0) {
+                showToast("Please enter a valid recharge amount.", "error");
+                return;
+            }
+            if (!mpesaCode || mpesaCode.length < 5) {
+                showToast("Please enter a valid M-Pesa transaction code.", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Verifying M-Pesa Code (10s)...";
+
+            setTimeout(() => {
+                db.currentUser.hasRecharged = true;
+                db.currentUser.balance += amt;
+
+                const rechargeRecord = {
+                    id: mpesaCode,
+                    user: db.currentUser.credential,
+                    amount: amt,
+                    timestamp: new Date().toLocaleString(),
+                    status: 'Successful'
+                };
+                db.recharges.push(rechargeRecord);
+
+                updateUserInDB();
+                saveDB();
+                initDashboard();
+                closeModal('modal-recharge');
+                btn.disabled = false;
+                btn.innerText = "Submit Code & Verify (10s)";
+                amtInput.value = '';
+                codeInput.value = '';
+                showToast(`M-Pesa code ${mpesaCode} verified! Recharge of KES ${amt.toLocaleString()} reflected on dashboard.`, "success");
+            }, 10000); // 10 seconds delay as requested
+        }
+
+        function processWithdraw() {
+            const amtInput = document.getElementById('withdraw-amount-input');
+            const destInput = document.getElementById('withdraw-dest-input');
+            const amt = parseFloat(amtInput.value);
+            const dest = destInput.value.trim();
+
+            if (!amt || amt < 400) {
+                showToast("Minimum withdrawal is KES 400.", "error");
+                return;
+            }
+            if (!dest) {
+                showToast("Please enter destination phone / account number.", "error");
+                return;
+            }
+            if (db.currentUser.balance < amt) {
+                showToast("Insufficient balance on dashboard for this withdrawal.", "error");
+                return;
+            }
+
+            db.currentUser.balance -= amt;
+
+            const withdrawRecord = {
+                id: 'WDR-' + Math.floor(100000 + Math.random() * 900000),
+                user: db.currentUser.credential,
+                amount: amt,
+                destination: dest,
+                timestamp: new Date().toLocaleString(),
+                status: 'Pending Management Verification'
+            };
+            db.withdrawals.push(withdrawRecord);
+
+            updateUserInDB();
+            saveDB();
+            initDashboard();
+            closeModal('modal-withdraw');
+            amtInput.value = '';
+            destInput.value = '';
+            showToast("Withdrawal submitted successfully. Awaiting management verification.", "success");
+        }
+
+        // --- TEAM & INVITATION ---
+        function copyInviteCode() {
+            const code = db.currentUser.inviteCode;
+            navigator.clipboard.writeText(code);
+            showToast("Invitation code copied to clipboard!", "success");
+        }
+
+        function renderTeam() {
+            document.getElementById('team-count').innerText = "0 Members";
+            document.getElementById('team-recharged-count').innerText = "0 Active";
+            document.getElementById('team-commission').innerText = "KES 0.00";
+        }
+
+        // --- HISTORY ---
+        function renderHistory() {
+            const recList = document.getElementById('recharge-history-list');
+            const wdrList = document.getElementById('withdraw-history-list');
+
+            const userRecs = db.recharges.filter(r => r.user === db.currentUser.credential);
+            const userWdrs = db.withdrawals.filter(w => w.user === db.currentUser.credential);
+
+            recList.innerHTML = userRecs.length ? '' : `<p class="text-xs text-gray-500 italic">No recharge records found.</p>`;
+            userRecs.forEach(r => {
+                recList.innerHTML += `
+                    <div class="bg-gray-900/80 p-3 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
+                        <div>
+                            <span class="font-bold text-white">+ KES ${r.amount.toLocaleString()}</span>
+                            <span class="block text-[10px] text-indigo-400 font-mono">Code: ${r.id}</span>
+                            <span class="block text-[10px] text-gray-400">${r.timestamp}</span>
+                        </div>
+                        <span class="bg-emerald-950 text-emerald-400 px-2 py-1 rounded text-[10px] font-bold">${r.status}</span>
+                    </div>
+                `;
+            });
+
+            wdrList.innerHTML = userWdrs.length ? '' : `<p class="text-xs text-gray-500 italic">No withdrawal records found.</p>`;
+            userWdrs.forEach(w => {
+                wdrList.innerHTML += `
+                    <div class="bg-gray-900/80 p-3 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
+                        <div>
+                            <span class="font-bold text-white">- KES ${w.amount.toLocaleString()}</span>
+                            <span class="block text-[10px] text-gray-400">${w.destination} • ${w.timestamp}</span>
+                        </div>
+                        <span class="bg-amber-950 text-amber-400 px-2 py-1 rounded text-[10px] font-bold">${w.status}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // --- MANAGEMENT / ADMIN PANEL ---
+        function initAdminPanel() {
+            document.getElementById('admin-user-count').innerText = db.users.length + " Users";
+            const totalRec = db.recharges.reduce((acc, curr) => acc + curr.amount, 0);
+            document.getElementById('admin-total-recharges').innerText = `KES ${totalRec.toLocaleString()}`;
+
+            const pendingWdrs = db.withdrawals.filter(w => w.status === 'Pending Management Verification');
+            document.getElementById('admin-pending-count').innerText = pendingWdrs.length + " Requests";
+
+            const list = document.getElementById('admin-withdraw-list');
+            list.innerHTML = pendingWdrs.length ? '' : `<p class="text-xs text-gray-500 italic">No pending withdrawal verification requests.</p>`;
+
+            pendingWdrs.forEach(w => {
+                list.innerHTML += `
+                    <div class="bg-gray-900/80 p-4 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
+                        <div>
+                            <span class="font-bold text-white">User: ${w.user}</span>
+                            <span class="block text-emerald-400 font-bold mt-0.5">Amount: KES ${w.amount.toLocaleString()}</span>
+                            <span class="block text-[10px] text-gray-400">Destination: ${w.destination} | Time: ${w.timestamp}</span>
+                        </div>
+                        <button onclick="verifyWithdrawal('${w.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg transition">Verify & Approve</button>
+                    </div>
+                `;
+            });
+        }
+
+        function verifyWithdrawal(wId) {
+            const w = db.withdrawals.find(item => item.id === wId);
+            if (w) {
+                w.status = 'Verified & Paid by Management';
+                saveDB();
+                initAdminPanel();
+                showToast(`Withdrawal ${wId} verified and approved successfully!`, "success");
+            }
+        }
+
+        function adminAddProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('adm-p-name').value.trim();
+            const price = parseFloat(document.getElementById('adm-p-price').value);
+            const daily = parseFloat(document.getElementById('adm-p-daily').value);
+            const img = document.getElementById('adm-p-img').value.trim();
+
+            const newProd = {
+                id: db.products.length + 1,
+                name: name,
+                price: price,
+                daily: daily,
+                days: 60,
+                img: img
+            };
+
+            db.products.push(newProd);
+            saveDB();
+            document.getElementById('adm-p-name').value = '';
+            document.getElementById('adm-p-price').value = '';
+            document.getElementById('adm-p-daily').value = '';
+            document.getElementById('adm-p-img').value = '';
+            showToast("New smartphone product added successfully!", "success");
+        }
+
+        // --- HELPER UTILITIES ---
+        function updateUserInDB() {
+            const index = db.users.findIndex(u => u.credential === db.currentUser.credential);
+            if (index !== -1) {
+                db.users[index] = db.currentUser;
+            }
+            saveDB();
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let bgCol = 'bg-indigo-600';
+            if (type === 'error') bgCol = 'bg-red-600';
+            if (type === 'info') bgCol = 'bg-gray-800';
+
+            toast.className = `${bgCol} text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info mr-1"><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
